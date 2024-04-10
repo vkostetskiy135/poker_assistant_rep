@@ -1,3 +1,4 @@
 totally_unnecessary.py
 venv/
 .idea/
+__pycache__/
