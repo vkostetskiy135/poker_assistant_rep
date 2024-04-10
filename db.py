@@ -5,7 +5,7 @@ from totally_unnecessary import db_host, db_user, db_password
 
 def db_connection_decorator(func):
     @wraps(func)
-    def wrapper(user_id):
+    def wrapper(*args, **kwargs):
         connection = mysql.connector.connect(
             host=db_host,
             user=db_user,
@@ -13,14 +13,46 @@ def db_connection_decorator(func):
             database='poker_star'
         )
         cursor = connection.cursor()
-        result = func(user_id, db_cursor=cursor)
+        result = func(*args, **kwargs, db_cursor=cursor)
         connection.commit()
         cursor.close()
         connection.close()
         return result
     return wrapper
 
-@db_connection_decorator
-def user_known_cards(user_id, db_cursor=None):
-    pass
 
+@db_connection_decorator
+def db_init(user_id, db_cursor=None):
+    try:
+        db_cursor.execute(f'''
+            INSERT INTO user_cards (user_id, known_cards) values ({str(user_id)}, '');
+            ''')
+    except mysql.connector.errors.IntegrityError:
+        db_cursor.execute(f'''
+                    UPDATE user_cards SET known_cards = '' WHERE user_id = {str(user_id)};
+                    ''')
+
+
+@db_connection_decorator
+def db_update_cards(user_id, known_cards, db_cursor=None):
+    db_cursor.execute(f'''
+    SELECT known_cards FROM user_cards WHERE user_id = '{user_id}';
+    ''')
+    db_known_cards = db_cursor.fetchone()
+    db_cursor.execute(f'''
+    UPDATE user_cards SET known_cards = '{db_known_cards[0]} {known_cards}' WHERE user_id = '{user_id}' ;
+    ''')
+
+
+@db_connection_decorator
+def db_clear_cards(user_id, db_cursor=None):
+    db_cursor.execute(f'''
+    UPDATE user_cards SET known_cards = '' WHERE user_id = '{user_id}';
+    ''')
+
+@db_connection_decorator
+def db_pull_cards(user_id, db_cursor=None):
+    db_cursor.execute(f'''
+    SELECT known_cards FROM user_cards WHERE user_id = '{user_id}';
+    ''')
+    return db_cursor.fetchone()[0]

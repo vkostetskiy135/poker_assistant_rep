@@ -2,3 +2,4 @@ totally_unnecessary.py
 venv/
 .idea/
 __pycache__/
+tests_only.py
