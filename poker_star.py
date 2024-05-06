@@ -112,7 +112,7 @@ class Deck:
                             five_in_a_row = [v]
                 if len(five_in_a_row) > 4:
                     return 'Стрит флеш'
-            return
+            return False
 
         suit_for_flash = check_for_flush()
         if suit_for_flash:
@@ -307,7 +307,7 @@ class Deck:
             all_cards = [card for card in known_cards]
             for card in river:
                 all_cards.append(card)
-            if self.is_royal_or_straight_flush(all_cards) == "Стрит флеш":
+            if self.is_royal_or_straight_flush(all_cards):
                 successes += 1
         return f'{round(successes / len(all_possible_combinations) * 100, 2)}%'
 
