@@ -59,24 +59,67 @@ class Deck:
             return check_straight(low_ace_values)
         return False
 
-    def is_royal_flush(self, cards):
-        def check_flush_and_straight():
+    # def is_royal_or_straight_flush(self, cards):
+    #     def check_flush_and_straight():
+    #         values = [self.card_order[card[0]] for card in cards]
+    #         suits = [card[1] for card in cards]
+    #         if len(set(suits)) != 1:  # Все карты должны быть одной масти для флеша
+    #             return False
+    #         sorted_values = sorted(values)
+    #         if sorted_values[4] - sorted_values[0] == 4:  # Проверка на стрит
+    #             return True
+    #         if sorted_values == [2, 3, 4, 5, 14]:  # Проверка на низкий стрит с Тузом
+    #             return True
+    #         return False
+    #     for five_cards in itertools.combinations(cards, 5):
+    #         if check_flush_and_straight():
+    #             if set(self.card_order[card[0]] for card in five_cards) == {10, 11, 12, 13, 14}:
+    #                 return "Роял флеш"
+    #             return "Стрит флеш"
+    #     return False
+
+    def is_royal_or_straight_flush(self, cards):
+        def check_for_flush():
+            counted_suits = self.count_kinds_or_suits(1, cards)
+            for key, value in counted_suits.items():
+                if value >= 5:
+                    return key
+            return None
+        
+        def check_for_straight(cards_to_check):
             values = [self.card_order[card[0]] for card in cards]
-            suits = [card[1] for card in cards]
-            if len(set(suits)) != 1:  # Все карты должны быть одной масти для флеша
-                return False
-            sorted_values = sorted(values)
-            if sorted_values[4] - sorted_values[0] == 4:  # Проверка на стрит
-                return True
-            if sorted_values == [2, 3, 4, 5, 14]:  # Проверка на низкий стрит с Тузом
-                return True
-            return False
-        for five_cards in itertools.combinations(cards, 5):
-            if check_flush_and_straight():
-                if set(self.card_order[card[0]] for card in five_cards) == {10, 11, 12, 13, 14}:
+            values.sort()
+
+            if len(values) == 5:
+                if values == [10, 11, 12, 13, 14]:
                     return "Роял флеш"
-                return "Стрит флеш"
-        return False
+                elif values[4] - values[0] == 4 or values == [2, 3, 4, 5, 14]:
+                    return 'Стрит флеш'
+            else:
+                if all(item in values for item in [10, 11, 12, 13, 14]):
+                    return "Роял флеш"
+                elif all(item in values for item in [2, 3, 4, 5, 14]):
+                    return 'Стрит флеш'
+                five_in_a_row = []
+                for v in values:
+                    if not five_in_a_row:
+                        five_in_a_row.append(v)
+                        continue
+                    else:
+                        if v - five_in_a_row[-1] == 1:
+                            five_in_a_row.append(v)
+                        else:
+                            five_in_a_row = [v]
+                if len(five_in_a_row) > 4:
+                    return 'Стрит флеш'
+            return
+
+        suit_for_flash = check_for_flush()
+        if suit_for_flash:
+            desired_suit_only_cards = [card for card in cards if card[1] == suit_for_flash]
+            desired_suit_only_cards
+            return check_for_straight(desired_suit_only_cards)
+        return
 
     def pair(self, known_cards, all_possible_combinations):
         # Проверка есть ли уже эта комбинация
@@ -254,9 +297,9 @@ class Deck:
     def straight_flush(self, known_cards, all_possible_combinations):
         # Проверка на наличие этой комбинации
         if len(known_cards) >= 5:
-            if self.is_royal_flush(known_cards) == "Стрит флеш":
+            if self.is_royal_or_straight_flush(known_cards) == "Стрит флеш":
                 return f'У вас уже есть стрит флеш!!!'
-            elif self.is_royal_flush(known_cards) == "Роял флеш":
+            elif self.is_royal_or_straight_flush(known_cards) == "Роял флеш":
                 return f'Ты ебанутый?! Это же РОЯЯЯЯЯЛ!!!'
         # Вычисление вероятности
         successes = 0
@@ -264,15 +307,14 @@ class Deck:
             all_cards = [card for card in known_cards]
             for card in river:
                 all_cards.append(card)
-            if self.is_royal_flush(all_cards) == "Стрит флеш":
+            if self.is_royal_or_straight_flush(all_cards) == "Стрит флеш":
                 successes += 1
         return f'{round(successes / len(all_possible_combinations) * 100, 2)}%'
-        pass
 
     def royal_flush(self, known_cards, all_possible_combinations):
         # Проверка на наличие этой комбинации
         if len(known_cards) >= 5:
-            if self.is_royal_flush(known_cards) == "Роял флеш":
+            if self.is_royal_or_straight_flush(known_cards) == "Роял флеш":
                 return f'Ты ебанутый?! Это же РОЯЯЯЯЯЛ!!!'
         # Вычисление вероятности
         successes = 0
@@ -280,6 +322,8 @@ class Deck:
             all_cards = [card for card in known_cards]
             for card in river:
                 all_cards.append(card)
-            if self.is_royal_flush(all_cards) == "Роял флеш":
+            if self.is_royal_or_straight_flush(all_cards) == "Роял флеш":
                 successes += 1
         return f'{round(successes / len(all_possible_combinations) * 100, 2)}%'
+
+
